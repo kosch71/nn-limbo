@@ -5,6 +5,7 @@ class KNN:
     """
     K-neariest-neighbor classifier using L1 loss
     """
+
     def __init__(self, k=1):
         self.k = k
 
@@ -15,7 +16,7 @@ class KNN:
     def predict(self, X, num_loops=0):
         '''
         Uses the KNN model to predict clases for the data samples provided
-        
+
         Arguments:
         X, np array (num_samples, num_features) - samples to run
            through the model
@@ -44,7 +45,7 @@ class KNN:
 
         Arguments:
         X, np array (num_test_samples, num_features) - samples to run
-        
+
         Returns:
         dists, np array (num_test_samples, num_train_samples) - array
            with distances between each test and each train sample
@@ -54,8 +55,9 @@ class KNN:
         dists = np.zeros((num_test, num_train), np.float32)
         for i_test in range(num_test):
             for i_train in range(num_train):
-                # TODO: Fill dists[i_test][i_train]
-                pass
+                dists[i_test][i_train] = np.sum(
+                    np.abs(X[i_test] - self.train_X[i_train]))
+        return dists
 
     def compute_distances_one_loop(self, X):
         '''
@@ -64,7 +66,7 @@ class KNN:
 
         Arguments:
         X, np array (num_test_samples, num_features) - samples to run
-        
+
         Returns:
         dists, np array (num_test_samples, num_train_samples) - array
            with distances between each test and each train sample
@@ -73,9 +75,8 @@ class KNN:
         num_test = X.shape[0]
         dists = np.zeros((num_test, num_train), np.float32)
         for i_test in range(num_test):
-            # TODO: Fill the whole row of dists[i_test]
-            # without additional loops or list comprehensions
-            pass
+            dists[i_test] = np.sum(np.abs(X[i_test] - self.train_X), axis=1)
+        return dists
 
     def compute_distances_no_loops(self, X):
         '''
@@ -84,7 +85,7 @@ class KNN:
 
         Arguments:
         X, np array (num_test_samples, num_features) - samples to run
-        
+
         Returns:
         dists, np array (num_test_samples, num_train_samples) - array
            with distances between each test and each train sample
@@ -93,13 +94,13 @@ class KNN:
         num_test = X.shape[0]
         # Using float32 to to save memory - the default is float64
         dists = np.zeros((num_test, num_train), np.float32)
-        # TODO: Implement computing all distances with no loops!
-        pass
+        dists += np.sum(np.abs(X[:, None] - self.train_X[None, :]), axis=2)
+        return dists 
 
     def predict_labels_binary(self, dists):
         '''
         Returns model predictions for binary classification case
-        
+
         Arguments:
         dists, np array (num_test_samples, num_train_samples) - array
            with distances between each test and each train sample
@@ -111,15 +112,20 @@ class KNN:
         num_test = dists.shape[0]
         pred = np.zeros(num_test, np.bool)
         for i in range(num_test):
-            # TODO: Implement choosing best class based on k
-            # nearest training samples
-            pass
+            neighbors = [0, 0]
+            elem_dists = []
+            for index, elem in enumerate(dists[i]):
+                elem_dists.append((index, elem))
+            elem_dists = sorted(elem_dists, key=lambda dist: dist[1])
+            for index_elem in elem_dists[:self.k]:
+                neighbors[self.train_y[index_elem[0]]] += 1
+            pred[i] = (neighbors[0] < neighbors[1])
         return pred
 
     def predict_labels_multiclass(self, dists):
         '''
         Returns model predictions for multi-class classification case
-        
+
         Arguments:
         dists, np array (num_test_samples, num_train_samples) - array
            with distances between each test and each train sample
@@ -132,7 +138,12 @@ class KNN:
         num_test = dists.shape[0]
         pred = np.zeros(num_test, np.int)
         for i in range(num_test):
-            # TODO: Implement choosing best class based on k
-            # nearest training samples
-            pass
+            neighbors = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            elem_dists = []
+            for index, elem in enumerate(dists[i]):
+                elem_dists.append((index, elem))
+            elem_dists = sorted(elem_dists, key=lambda dist: dist[1])
+            for index_elem in elem_dists[:self.k]:
+                neighbors[self.train_y[index_elem[0]].astype(np.int)] += 1
+            pred[i] = neighbors.index(max(neighbors))
         return pred
