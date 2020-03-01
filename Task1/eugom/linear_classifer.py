@@ -65,28 +65,9 @@ def softmax_with_cross_entropy(predictions, target_index):
       loss, single value - cross-entropy loss
       dprediction, np array same shape as predictions - gradient of predictions by loss value
     '''
-    if predictions.ndim == 1:
-        predictions_new = predictions - np.max(predictions)
-    else:
-        maximum = np.max(predictions, axis=1)
-        predictions_new = predictions - maximum[:, np.newaxis]
-    predictions_new = np.exp(predictions_new)
-    predictions_sum = np.sum(predictions_new, axis=(predictions.ndim-1))
-    if predictions.ndim == 1:
-        probabilities = predictions_new / predictions_sum
-    else:
-        probabilities = predictions_new / predictions_sum[:, np.newaxis]
-
-    mask_target = np.zeros(probabilities.shape)
-    if probabilities.ndim == 1:
-        mask_target[target_index] = 1
-    elif target_index.ndim == 1:
-        mask_target[tuple(np.arange(0, probabilities.shape[0])), tuple(target_index)] = 1
-    else:
-        mask_target[tuple(np.arange(0, probabilities.shape[0])), tuple(target_index.T[0])] = 1
-
-    loss = -np.sum(mask_target * np.log(probabilities))
-
+    softmax(predictions)
+    cross_entropy_loss(probabilities, target_index)
+    
     dprediction = probabilities
     dprediction[mask_target.astype(bool)] = dprediction[mask_target.astype(bool)]-1
 
