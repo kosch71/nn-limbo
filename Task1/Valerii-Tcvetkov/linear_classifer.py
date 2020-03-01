@@ -60,10 +60,11 @@ def cross_entropy_loss(probs, target_index):
     # print([(i, target_index[i]) for i in range(target_index.size)])
     # print(probs)
     if probs.ndim == 1:
-        loss = - np.log(probs[target_index])
+        loss = -np.log(probs[target_index])
     else:
-        # print(np.arange(probs.shape[0]))
-        loss = np.sum(- np.log(probs[np.arange(probs.shape[0]), target_index]))
+        batch_size = probs.shape[0]
+        target_index = (np.arange(batch_size), target_index.reshape(batch_size))
+        loss = np.mean(-np.log(probs[target_index]))
 
     # print([[i, probs[i, target_index[i]][0]] for i in range(target_index.size)])
     # print()
@@ -98,37 +99,17 @@ def softmax_with_cross_entropy(predictions, target_index):
 
     # print(predictions.ndim)
 
+    probs = softmax(predictions)
+    loss = cross_entropy_loss(probs, target_index)
+    dprediction = probs.copy()
+
     if predictions.ndim == 1:
-        pd = predictions - np.max(predictions)
+        dprediction[target_index] -= 1
     else:
-        maximum = np.max(predictions, axis=1)
-        # print(maximum[:, np.newaxis])
-        pd = predictions - maximum[:, np.newaxis]
-    pd = np.exp(pd)
-    pd_sum = np.sum(pd, axis=(predictions.ndim - 1))
-    if predictions.ndim == 1:
-        probs = pd / pd_sum
-    else:
-        # print(probs = pd / pd_sum[:, np.newaxis])
-        probs = pd / pd_sum[:, np.newaxis]
-
-    tg_ind_flt = np.zeros(probs.shape)
-    if probs.ndim == 1:
-        tg_ind_flt[target_index] = 1
-    elif target_index.ndim == 1:
-        # print(tuple(target_index))
-        tg_ind_flt[tuple(np.arange(0, probs.shape[0])), tuple(target_index)] = 1
-    else:
-        tg_ind_flt[tuple(np.arange(0, probs.shape[0])), tuple(target_index.T[0])] = 1
-
-    # print(tg_ind_flt)
-
-    loss = -np.sum(tg_ind_flt * np.log(probs))
-
-    dprediction = probs
-    dprediction[tg_ind_flt.astype(bool)] = dprediction[tg_ind_flt.astype(bool)] - 1
-
-    # print(dprediction)
+        batch_size = predictions.shape[0]
+        temp_index = (np.arange(batch_size), target_index.reshape(batch_size))
+        dprediction[temp_index] -= 1
+        dprediction /= batch_size
 
     return loss, dprediction
     # raise Exception("Not implemented!")
