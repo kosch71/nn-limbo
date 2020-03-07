@@ -10,7 +10,9 @@ def multiclass_accuracy(prediction, ground_truth):
     accuracy - ratio of accurate predictions to total samples
     """
 
-    # TODO: Implement computing accuracy
-    raise Exception("Not implemented!")
+    truth = 0
+    for i in range(prediction.shape[0]):
+        if prediction[i] == ground_truth[i]:
+            truth += 1
 
-    return 0
+    return truth / prediction.shape[0]
